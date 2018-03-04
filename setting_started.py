@@ -48,34 +48,60 @@ from pyke import knowledge_engine, krb_traceback, goal
 # Compile and load .krb files in same directory that I'm in (recursively).
 engine = knowledge_engine.engine(__file__)
 
-fc_goal = goal.compile('family.how_related($person1, $person2, $relationship)')
+fc_goal = goal.compile('leaders.on_continent($leader, $continent)')
+
+fc_goal2 = goal.compile('leaders.gender($leader, $gender)')
 
 
-
-def fc_test(person1 = 'bruce'):
+def fc_test(continent = 'Europe'):
     '''
         This function runs the forward-chaining example (fc_example.krb).
     '''
     engine.reset()      # Allows us to run tests multiple times.
-
+    print("test1")
     start_time = time.time()
-    engine.activate('fc_example')  # Runs all applicable forward-chaining rules.
+    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
     fc_end_time = time.time()
     fc_time = fc_end_time - start_time
 
     print("doing proof")
-    with fc_goal.prove(engine, person1=person1) as gen:
+    with fc_goal.prove(engine, continent=continent) as gen:
         for vars, plan in gen:
-            print("%s, %s are %s" % \
-                    (person1, vars['person2'], vars['relationship']))
+            print("%s is on the continent %s" % \
+                    (vars['leader'], vars['continent']))
     prove_time = time.time() - fc_end_time
     print()
     print("done")
     engine.print_stats()
     print("fc time %.2f, %.0f asserts/sec" % \
-          (fc_time, engine.get_kb('family').get_stats()[2] / fc_time))
+          (fc_time, engine.get_kb('leaders').get_stats()[2] / fc_time))
 
 fc_test()
+
+def fc_test2(gender = 'female'):
+    '''
+        This function runs the forward-chaining example (fc_example.krb).
+    '''
+    engine.reset()      # Allows us to run tests multiple times.
+    print("test2")
+    start_time = time.time()
+    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
+    fc_end_time = time.time()
+    fc_time = fc_end_time - start_time
+
+    print("doing proof")
+    with fc_goal2.prove(engine, gedner=gender) as gen:
+        for vars, plan in gen:
+            print("%s is %s" % \
+                    (vars['leader'], vars['gender']))
+    prove_time = time.time() - fc_end_time
+    print()
+    print("done")
+    engine.print_stats()
+    print("fc time %.2f, %.0f asserts/sec" % \
+          (fc_time, engine.get_kb('leaders').get_stats()[2] / fc_time))
+
+fc_test2()
 
 def bc_test(person1 = 'bruce'):
     engine.reset()      # Allows us to run tests multiple times.

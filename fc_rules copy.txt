@@ -1,0 +1,46 @@
+# son_of
+#    foreach
+#	family.son_of($child, $father, $mother)
+#    assert
+#	family.child_parent($child, $father, father, son)
+#	family.child_parent($child, $mother, mother, son)
+
+rules
+    foreach
+	leaders.rules($leader, $nation)
+	check $nation == 'Germany'
+    assert
+	leaders.on_continent($leader, Europe)
+
+gender
+    foreach
+	leaders.rules($leader, $nation)
+	notany
+            leaders.gender($leader, $gender)
+            check $gender == 'female'
+    assert
+        python print($leader, " is a man")
+
+dictator
+    foreach
+	leaders.rules($leader, $nation)
+	notany
+            leaders.free_elections($nation)
+            check $nation == $nation
+    assert
+        python print($leader, " is a dictator")
+
+freely_elected
+    foreach
+	leaders.rules($leader, $nation)
+	leaders.free_elections($nation)
+    assert
+        python print($leader, " was freely elected")
+
+president
+    foreach
+	leaders.rules($leader, $nation)
+	notany
+            leaders.title($leader, $title)
+    assert
+        python print($leader, " is president")

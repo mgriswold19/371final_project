@@ -1,0 +1,46 @@
+# son_of
+#    foreach
+#	family.son_of($child, $father, $mother)
+#    assert
+#	family.child_parent($child, $father, father, son)
+#	family.child_parent($child, $mother, mother, son)
+
+rules
+    foreach
+	leaders.rules($leader, $nation)
+	check $nation == 'Germany'
+    assert
+	leaders.on_continent($leader, Europe)
+
+gender
+    foreach
+	leaders.rules($leader, $nation)
+	notany
+            leaders.gender($leader, $gender)
+            check $gender == 'female'
+    assert
+        leaders.gender($leader, 'male')
+
+dictator
+    foreach
+	leaders.rules($leader, $nation)
+	notany
+            leaders.free_elections($nation)
+            check $nation == $nation
+    assert
+        leaders.dictator($leader)
+
+freely_elected
+    foreach
+	leaders.rules($leader, $nation)
+	leaders.free_elections($nation)
+    assert
+        leaders.freely_elected($leader)
+
+president
+    foreach
+	leaders.rules($leader, $nation)
+	notany
+            leaders.title($leader, $title)
+    assert
+        leaders.title($leader, 'president')
