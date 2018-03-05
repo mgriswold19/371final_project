@@ -142,7 +142,7 @@ def fc_test3():
 
         if ((observations/num_items) > best_entropy):
             best_entropy = observations/num_items
-            best_split = attribute
+            best_split = "offical title " + str(attribute)
             yes = removed_leaders
 
     no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
@@ -186,9 +186,50 @@ def fc_test4():
 
     return([best_split,best_entropy,yes,no])
 
+def fc_test5():
+    '''
+    nation
+    '''
+    engine.reset()      # Allows us to run tests multiple times.
+    # print("test2")
+    start_time = time.time()
+    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
+    num_items = len(init_leaders) - len(eliminated_leaders)
+
+    attribute_list = []
+
+    with fc_init.prove(engine) as gen:
+        for vars, plan in gen:
+            if vars['nation'] not in attribute_list:
+                attribute_list.append(vars['nation'])
+
+    best_split = ""
+    best_entropy = 0
+    yes = []
+
+    # print("doing proof")
+    for attribute in attribute_list:
+        observations = 0
+        removed_leaders = []
+        with fc_init.prove(engine, nation=attribute) as gen:
+            for vars, plan in gen:
+                if vars['leader'] not in eliminated_leaders:
+                    # print("%s is %s" % \
+                    #         (vars['leader'], vars['gender']))
+                    observations += 1
+                    removed_leaders.append(vars['leader'])
+        if ((observations/num_items) > best_entropy):
+            best_entropy = observations/num_items
+            best_split = "the ruler of " + str(attribute)
+            yes = removed_leaders
+
+        no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
+
+    return([best_split,best_entropy,yes,no])
+
 def split():
 
-    attrlit = [fc_test2(),fc_test3(),fc_test4()]
+    attrlit = [fc_test2(),fc_test3(),fc_test4(),fc_test5()]
     # print(attrlit)
 
     curr_best_entropy = 0
@@ -196,6 +237,9 @@ def split():
 
     for index, item in enumerate(attrlit):
         entropy = 1 - abs(item[1]-.5)
+        # print("entropy:")
+        # print(entropy)
+        # print(item)
         if entropy > curr_best_entropy:
             curr_best_entropy = entropy
             idx = index
@@ -228,4 +272,6 @@ def split():
 kb_init()
 split()
 
-        
+#instructions for new test
+#1) chance fcgoal in both for loops
+#2) change the attribute in the prove() function
