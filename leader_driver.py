@@ -207,10 +207,14 @@ def split():
 
     user_answer = input("Is the leader " + attrlit[idx][0] + " ? (Yes/No) ")
 
-    if user_answer == "Yes" or "yes":
+    if user_answer.lower() == "yes":
         eliminated_leaders.extend(attrlit[idx][3])
+        # print("eliminated:")
+        # print(attrlit[idx][3])
     else:
         eliminated_leaders.extend(attrlit[idx][2])
+        # print("eliminated:")
+        # print(attrlit[idx][2])
 
     if len(init_leaders) - len(eliminated_leaders) == 1:
         guessed_leader = list(set(init_leaders) - set(eliminated_leaders))
