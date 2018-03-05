@@ -115,6 +115,35 @@ def president(rule, context = None, index = None):
   finally:
     context.done()
 
+def allies(rule, context = None, index = None):
+  engine = rule.rule_base.engine
+  if context is None: context = contexts.simple_context()
+  try:
+    with knowledge_base.Gen_once if index == 0 \
+             else engine.lookup('leaders', 'allies', context,
+                                rule.foreach_patterns(0)) \
+      as gen_0:
+      for dummy in gen_0:
+        with knowledge_base.Gen_once if index == 1 \
+                 else engine.lookup('leaders', 'rules', context,
+                                    rule.foreach_patterns(1)) \
+          as gen_1:
+          for dummy in gen_1:
+            with knowledge_base.Gen_once if index == 2 \
+                     else engine.lookup('leaders', 'rules', context,
+                                        rule.foreach_patterns(2)) \
+              as gen_2:
+              for dummy in gen_2:
+                engine.assert_('leaders', 'friendly_with',
+                               (rule.pattern(0).as_data(context),
+                                rule.pattern(1).as_data(context),)),
+                engine.assert_('leaders', 'friendly_with',
+                               (rule.pattern(2).as_data(context),
+                                rule.pattern(3).as_data(context),)),
+                rule.rule_base.num_fc_rules_triggered += 1
+  finally:
+    context.done()
+
 def populate(engine):
   This_rule_base = engine.get_create('fc_rules')
   
@@ -169,6 +198,24 @@ def populate(engine):
       True),),
     (contexts.variable('leader'),
      pattern.pattern_literal('president'),))
+  
+  fc_rule.fc_rule('allies', This_rule_base, allies,
+    (('leaders', 'allies',
+      (contexts.variable('nation1'),
+       contexts.variable('nation2'),),
+      False),
+     ('leaders', 'rules',
+      (contexts.variable('leader1'),
+       contexts.variable('nation1'),),
+      False),
+     ('leaders', 'rules',
+      (contexts.variable('leader2'),
+       contexts.variable('nation2'),),
+      False),),
+    (contexts.variable('leader1'),
+     contexts.variable('nation2'),
+     contexts.variable('leader2'),
+     contexts.variable('nation1'),))
 
 
 Krb_filename = '../fc_rules.krb'
@@ -190,4 +237,9 @@ Krb_lineno_map = (
     ((98, 102), (42, 42)),
     ((104, 107), (44, 44)),
     ((111, 113), (46, 46)),
+    ((122, 126), (50, 50)),
+    ((127, 131), (51, 51)),
+    ((132, 136), (52, 52)),
+    ((137, 139), (54, 54)),
+    ((140, 142), (55, 55)),
 )

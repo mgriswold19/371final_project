@@ -1,6 +1,7 @@
 import contextlib
 import sys
 import time
+import random
 
 from pyke import knowledge_engine, krb_traceback, goal
 
@@ -8,14 +9,11 @@ from pyke import knowledge_engine, krb_traceback, goal
 engine = knowledge_engine.engine(__file__)
 
 fc_init = goal.compile('leaders.rules($leader, $nation)')
-
 fc_continent = goal.compile('leaders.on_continent($leader, $continent)')
-
 fc_goal2 = goal.compile('leaders.gender($leader, $gender)')
-
 fc_goal3 = goal.compile('leaders.title($leader, $title)')
-
 fc_goal4 = goal.compile('leaders.dictator($leader)')
+fc_goal6 = goal.compile('leaders.friendly_with($leader, $nation)')
 
 eliminated_leaders = []
 
@@ -227,9 +225,51 @@ def fc_test5():
 
     return([best_split,best_entropy,yes,no])
 
+def fc_test6():
+    '''
+    nation
+    '''
+    engine.reset()      # Allows us to run tests multiple times.
+    # print("test2")
+    start_time = time.time()
+    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
+    num_items = len(init_leaders) - len(eliminated_leaders)
+
+    attribute_list = []
+
+    with fc_goal6.prove(engine) as gen:
+        for vars, plan in gen:
+            if vars['nation'] not in attribute_list:
+                attribute_list.append(vars['nation'])
+
+    best_split = ""
+    best_entropy = 0
+    yes = []
+
+    # print("doing proof")
+    for attribute in attribute_list:
+        observations = 0
+        removed_leaders = []
+        with fc_goal6.prove(engine, nation=attribute) as gen:
+            for vars, plan in gen:
+                if vars['leader'] not in eliminated_leaders:
+                    # print("%s is %s" % \
+                    #         (vars['leader'], vars['gender']))
+                    observations += 1
+                    removed_leaders.append(vars['leader'])
+        if ((observations/num_items) > best_entropy):
+            best_entropy = observations/num_items
+            best_split = "allies with " + str(attribute)
+            yes = removed_leaders
+
+        no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
+
+    return([best_split,best_entropy,yes,no])
+
+
 def split():
 
-    attrlit = [fc_test2(),fc_test3(),fc_test4(),fc_test5()]
+    attrlit = [fc_test2(),fc_test3(),fc_test4(),fc_test5(),fc_test6()]
     # print(attrlit)
 
     curr_best_entropy = 0
@@ -243,6 +283,11 @@ def split():
         if entropy > curr_best_entropy:
             curr_best_entropy = entropy
             idx = index
+        elif entropy == curr_best_entropy:
+            if random.random() < .5:
+                curr_best_entropy = entropy
+                idx = index
+
     # print()
     # print()
     # print("splitting on:")

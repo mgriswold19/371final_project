@@ -44,3 +44,15 @@ president
             leaders.title($leader, $title)
     assert
         leaders.title($leader, 'president')
+
+allies
+    foreach
+	leaders.allies($nation1, $nation2)
+	leaders.rules($leader1, $nation1)
+	leaders.rules($leader2, $nation2)
+    assert
+        leaders.friendly_with($leader1, $nation2)
+        leaders.friendly_with($leader2, $nation1)
+
+
+
