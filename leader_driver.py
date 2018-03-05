@@ -7,6 +7,8 @@ from pyke import knowledge_engine, krb_traceback, goal
 # Compile and load .krb files in same directory that I'm in (recursively).
 engine = knowledge_engine.engine(__file__)
 
+fc_init = goal.compile('leaders.rules($leader, $nation)')
+
 fc_continent = goal.compile('leaders.on_continent($leader, $continent)')
 
 fc_goal2 = goal.compile('leaders.gender($leader, $gender)')
@@ -15,9 +17,27 @@ fc_goal3 = goal.compile('leaders.title($leader, $title)')
 
 fc_goal4 = goal.compile('leaders.dictator($leader)')
 
-start_num_items = 12 #need to make this dynamic
-
 eliminated_leaders = []
+
+init_leaders = []
+
+def kb_init():
+    curr_list = []
+    engine.reset()    
+    engine.activate('fc_rules')
+    with fc_init.prove(engine) as gen:
+        for vars, plan in gen: 
+            curr_list.append(vars['leader'])
+    global init_leaders
+    init_leaders = curr_list
+    # print("init_leaders!")
+    print()
+    print()
+    print("The possible leaders are:")
+    print(init_leaders)
+    print()
+    print()
+
 
 def fc_contient(continent = 'Europe'):
     '''
@@ -52,7 +72,7 @@ def fc_test2(gender = 'male'):
     # print("test2")
     start_time = time.time()
     engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = start_num_items - len(eliminated_leaders)
+    num_items = len(init_leaders) - len(eliminated_leaders)
 
     attribute_list = []
 
@@ -63,7 +83,7 @@ def fc_test2(gender = 'male'):
 
     best_split = ""
     best_entropy = 0
-    final_removed_leaders = []
+    yes = []
 
     # print("doing proof")
     for attribute in attribute_list:
@@ -79,9 +99,11 @@ def fc_test2(gender = 'male'):
         if ((observations/num_items) > best_entropy):
             best_entropy = observations/num_items
             best_split = attribute
-            final_removed_leaders = removed_leaders
+            yes = removed_leaders
 
-    return([best_split,best_entropy,final_removed_leaders])
+        no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
+
+    return([best_split,best_entropy,yes,no])
 
 
 
@@ -93,7 +115,7 @@ def fc_test3():
     # print("Title Attribute:")
     start_time = time.time()
     engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = start_num_items - len(eliminated_leaders)
+    num_items = len(init_leaders) - len(eliminated_leaders)
     attribute_list = []
 
     with fc_goal3.prove(engine) as gen:
@@ -105,7 +127,7 @@ def fc_test3():
 
     best_split = ""
     best_entropy = 0
-    final_removed_leaders = []
+    yes = []
 
     for attribute in attribute_list:
         observations = 0
@@ -121,9 +143,11 @@ def fc_test3():
         if ((observations/num_items) > best_entropy):
             best_entropy = observations/num_items
             best_split = attribute
-            final_removed_leaders = removed_leaders
+            yes = removed_leaders
 
-    return([best_split,best_entropy,final_removed_leaders])
+    no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
+
+    return([best_split,best_entropy,yes,no])
 
    
 
@@ -136,11 +160,11 @@ def fc_test4():
     engine.reset()      # Allows us to run tests multiple times.
     # print("test4")
     engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = start_num_items - len(eliminated_leaders)
+    num_items = len(init_leaders) - len(eliminated_leaders)
 
     best_split = ""
     best_entropy = 0
-    final_removed_leaders = []
+    yes = []
 
     # print("doing proof")
     observations = 0
@@ -155,15 +179,17 @@ def fc_test4():
 
     if ((observations/num_items) > best_entropy):
             best_entropy = (observations/num_items)
-            best_split = 'ISA dictator'
-            final_removed_leaders = removed_leaders
+            best_split = 'a dictator'
+            yes = removed_leaders
 
-    return([best_split,best_entropy,final_removed_leaders])
+    no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
+
+    return([best_split,best_entropy,yes,no])
 
 def split():
 
     attrlit = [fc_test2(),fc_test3(),fc_test4()]
-    print(attrlit)
+    # print(attrlit)
 
     curr_best_entropy = 0
     idx = 0
@@ -173,15 +199,29 @@ def split():
         if entropy > curr_best_entropy:
             curr_best_entropy = entropy
             idx = index
-    print()
-    print()
-    print("splitting on:")
-    print(attrlit[idx])
+    # print()
+    # print()
+    # print("splitting on:")
+    # print(attrlit[idx])
+    # print("split done")
 
+    user_answer = input("Is the leader " + attrlit[idx][0] + " ? (Yes/No) ")
 
-    eliminated_leaders.extend(attrlit[idx][2])
+    if user_answer == "Yes" or "yes":
+        eliminated_leaders.extend(attrlit[idx][3])
+    else:
+        eliminated_leaders.extend(attrlit[idx][2])
 
+    if len(init_leaders) - len(eliminated_leaders) == 1:
+        guessed_leader = list(set(init_leaders) - set(eliminated_leaders))
+        print("The leader you are thinking of is " + str(guessed_leader[0]))
+    else:
+        split()
+
+    
+
+# MUST CALL !!!!
+kb_init()
 split()
-split()
-split()
+
         
