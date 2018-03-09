@@ -5,54 +5,69 @@
 #	family.child_parent($child, $father, father, son)
 #	family.child_parent($child, $mother, mother, son)
 
-rules
-    foreach
-	leaders.rules($leader, $nation)
-	check $nation == 'Germany'
-    assert
-	leaders.on_continent($leader, Europe)
-
 gender
     foreach
-	leaders.rules($leader, $nation)
+	famous.knownFor($person, $status)
 	notany
-            leaders.gender($leader, $gender)
+            famous.gender($person, $gender)
             check $gender == 'female'
     assert
-        leaders.gender($leader, 'male')
+        famous.gender($person, 'male')
 
 dictator
     foreach
-	leaders.rules($leader, $nation)
+	famous.rules($person, $nation)
 	notany
-            leaders.free_elections($nation)
+            famous.free_elections($nation)
             check $nation == $nation
     assert
-        leaders.dictator($leader)
+        famous.dictator($person)
 
 freely_elected
     foreach
-	leaders.rules($leader, $nation)
-	leaders.free_elections($nation)
+	famous.rules($person, $nation)
+	famous.free_elections($nation)
     assert
-        leaders.freely_elected($leader)
+        famous.freely_elected($person)
 
 president
     foreach
-	leaders.rules($leader, $nation)
+	famous.rules($person, $nation)
 	notany
-            leaders.title($leader, $title)
+            famous.title($person, $title)
     assert
-        leaders.title($leader, 'president')
+        famous.title($person, 'president')
 
 allies
     foreach
-	leaders.allies($nation1, $nation2)
-	leaders.rules($leader1, $nation1)
-	leaders.rules($leader2, $nation2)
+	famous.allies($nation1, $nation2)
+	famous.rules($person1, $nation1)
+	famous.rules($person2, $nation2)
     assert
-        leaders.friendly_with($leader1, $nation2)
-        leaders.friendly_with($leader2, $nation1)
+        famous.friendly_with($person1, $nation2)
+        famous.friendly_with($person2, $nation1)
 
+children
+    foreach
+	famous.famousFor($person, $skill)
+	notany
+            famous.children($person, $yesno)
+    assert
+        famous.children($person, 'No')
+
+race
+    foreach
+	famous.famousFor($person, $skill)
+	notany
+            famous.race($person, $race)
+    assert
+        famous.race($person, 'Caucasian')
+
+princess
+    foreach
+	famous.princess($person)
+    assert
+        famous.gender($person, 'female')
+	famous.disney($person)
 
 

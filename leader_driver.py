@@ -1,23 +1,37 @@
-import contextlib
-import sys
-import time
-import random
+import contextlib as contextlib
+import sys as sys
+import time as time
+import random as random
 
 from pyke import knowledge_engine, krb_traceback, goal
 
-# Compile and load .krb files in same directory that I'm in (recursively).
 engine = knowledge_engine.engine(__file__)
 
-fc_init = goal.compile('leaders.rules($leader, $nation)')
-fc_continent = goal.compile('leaders.on_continent($leader, $continent)')
-fc_goal2 = goal.compile('leaders.gender($leader, $gender)')
-fc_goal3 = goal.compile('leaders.title($leader, $title)')
-fc_goal4 = goal.compile('leaders.dictator($leader)')
-fc_goal6 = goal.compile('leaders.friendly_with($leader, $nation)')
+fc_init = goal.compile('famous.knownFor($person, $status)')
+fc_rules = goal.compile('famous.rules($person, $nation)')
+fc_real = goal.compile('famous.real($person)')
+fc_lighthair = goal.compile('famous.lighthair($person, $haircolor)')
+fc_gender = goal.compile('famous.gender($person, $gender)')
+fc_title = goal.compile('famous.title($person, $title)')
+fc_dictator = goal.compile('famous.dictator($person)')
+fc_allies = goal.compile('famous.friendly_with($person, $nation)')
+fc_skill = goal.compile('famous.famousFor($person, $skill)')
+fc_children = goal.compile('famous.children($person)')
+fc_race = goal.compile('famous.race($person, $race)')
+fc_disney = goal.compile('famous.disney($person)')
+fc_princess = goal.compile('famous.princess($person)')
+fc_comic = goal.compile('famous.comics($person)')
+fc_villain = goal.compile('famous.villain($person)')
+fc_lightsaber = goal.compile('famous.lightsaber($person)')
 
-eliminated_leaders = []
+eliminated_persons = []
+init_persons = []
 
-init_leaders = []
+import all_tests as all_tests
+import general_tests as gen_tests
+import character_tests as char_tests
+import celeb_tests 
+import world_leader_tests as leader_tests
 
 def kb_init():
     curr_list = []
@@ -25,261 +39,29 @@ def kb_init():
     engine.activate('fc_rules')
     with fc_init.prove(engine) as gen:
         for vars, plan in gen: 
-            curr_list.append(vars['leader'])
-    global init_leaders
-    init_leaders = curr_list
-    # print("init_leaders!")
+            print(vars['person'])
+            curr_list.append(vars['person'])
+    global init_persons
+    init_persons = curr_list
     print()
     print()
-    print("The possible leaders are:")
-    print(init_leaders)
+    print("The possible persons are:")
+    print(init_persons)
     print()
     print()
-
-
-def fc_contient(continent = 'Europe'):
-    '''
-    contient
-    '''
-    engine.reset()      # Allows us to run tests multiple times.
-    # print("test1")
-    start_time = time.time()
-    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    fc_end_time = time.time()
-    fc_time = fc_end_time - start_time
-
-    # print("doing proof")
-    with fc_continent.prove(engine, continent=continent) as gen:
-        for vars, plan in gen:
-            print("%s is on the continent %s" % \
-                    (vars['leader'], vars['continent']))
-    prove_time = time.time() - fc_end_time
-    print()
-    # print("done")
-    engine.print_stats()
-    # print("fc time %.2f, %.0f asserts/sec" % \
-    #       (fc_time, engine.get_kb('leaders').get_stats()[2] / fc_time))
-
-fc_contient()
-
-def fc_test2(gender = 'male'):
-    '''
-    gender
-    '''
-    engine.reset()      # Allows us to run tests multiple times.
-    # print("test2")
-    start_time = time.time()
-    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = len(init_leaders) - len(eliminated_leaders)
-
-    attribute_list = []
-
-    with fc_goal2.prove(engine) as gen:
-        for vars, plan in gen:
-            if vars['gender'] not in attribute_list:
-                attribute_list.append(vars['gender'])
-
-    best_split = ""
-    best_entropy = 0
-    yes = []
-
-    # print("doing proof")
-    for attribute in attribute_list:
-        observations = 0
-        removed_leaders = []
-        with fc_goal2.prove(engine, gender=attribute) as gen:
-            for vars, plan in gen:
-                if vars['leader'] not in eliminated_leaders:
-                    # print("%s is %s" % \
-                    #         (vars['leader'], vars['gender']))
-                    observations += 1
-                    removed_leaders.append(vars['leader'])
-        if ((observations/num_items) > best_entropy):
-            best_entropy = observations/num_items
-            best_split = attribute
-            yes = removed_leaders
-
-        no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
-
-    return([best_split,best_entropy,yes,no])
-
-
-
-def fc_test3():
-    '''
-    title
-    '''
-    engine.reset()      # Allows us to run tests multiple times.
-    # print("Title Attribute:")
-    start_time = time.time()
-    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = len(init_leaders) - len(eliminated_leaders)
-    attribute_list = []
-
-    with fc_goal3.prove(engine) as gen:
-        for vars, plan in gen:
-            if vars['title'] not in attribute_list:
-                attribute_list.append(vars['title'])
-
-    # print("doing proof")
-
-    best_split = ""
-    best_entropy = 0
-    yes = []
-
-    for attribute in attribute_list:
-        observations = 0
-        removed_leaders = []
-        with fc_goal3.prove(engine, title=attribute) as gen:
-            for vars, plan in gen:
-                if vars['leader'] not in eliminated_leaders:
-                    # print("%s is called %s" % \
-                    #         (vars['leader'], vars['title']))
-                    observations += 1
-                    removed_leaders.append(vars['leader'])
-
-        if ((observations/num_items) > best_entropy):
-            best_entropy = observations/num_items
-            best_split = "offical title " + str(attribute)
-            yes = removed_leaders
-
-    no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
-
-    return([best_split,best_entropy,yes,no])
-
-   
-
-
-
-def fc_test4():
-    '''
-    dictator
-    '''
-    engine.reset()      # Allows us to run tests multiple times.
-    # print("test4")
-    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = len(init_leaders) - len(eliminated_leaders)
-
-    best_split = ""
-    best_entropy = 0
-    yes = []
-
-    # print("doing proof")
-    observations = 0
-    removed_leaders = []
-    with fc_goal4.prove(engine) as gen:
-        for vars, plan in gen:
-            if vars['leader'] not in eliminated_leaders:
-                # print("%s is a dictator" % \
-                #         (vars['leader']))
-                observations += 1
-                removed_leaders.append(vars['leader'])
-
-    if ((observations/num_items) > best_entropy):
-            best_entropy = (observations/num_items)
-            best_split = 'a dictator'
-            yes = removed_leaders
-
-    no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
-
-    return([best_split,best_entropy,yes,no])
-
-def fc_test5():
-    '''
-    nation
-    '''
-    engine.reset()      # Allows us to run tests multiple times.
-    # print("test2")
-    start_time = time.time()
-    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = len(init_leaders) - len(eliminated_leaders)
-
-    attribute_list = []
-
-    with fc_init.prove(engine) as gen:
-        for vars, plan in gen:
-            if vars['nation'] not in attribute_list:
-                attribute_list.append(vars['nation'])
-
-    best_split = ""
-    best_entropy = 0
-    yes = []
-
-    # print("doing proof")
-    for attribute in attribute_list:
-        observations = 0
-        removed_leaders = []
-        with fc_init.prove(engine, nation=attribute) as gen:
-            for vars, plan in gen:
-                if vars['leader'] not in eliminated_leaders:
-                    # print("%s is %s" % \
-                    #         (vars['leader'], vars['gender']))
-                    observations += 1
-                    removed_leaders.append(vars['leader'])
-        if ((observations/num_items) > best_entropy):
-            best_entropy = observations/num_items
-            best_split = "the ruler of " + str(attribute)
-            yes = removed_leaders
-
-        no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
-
-    return([best_split,best_entropy,yes,no])
-
-def fc_test6():
-    '''
-    nation
-    '''
-    engine.reset()      # Allows us to run tests multiple times.
-    # print("test2")
-    start_time = time.time()
-    engine.activate('fc_rules')  # Runs all applicable forward-chaining rules.
-    num_items = len(init_leaders) - len(eliminated_leaders)
-
-    attribute_list = []
-
-    with fc_goal6.prove(engine) as gen:
-        for vars, plan in gen:
-            if vars['nation'] not in attribute_list:
-                attribute_list.append(vars['nation'])
-
-    best_split = ""
-    best_entropy = 0
-    yes = []
-
-    # print("doing proof")
-    for attribute in attribute_list:
-        observations = 0
-        removed_leaders = []
-        with fc_goal6.prove(engine, nation=attribute) as gen:
-            for vars, plan in gen:
-                if vars['leader'] not in eliminated_leaders:
-                    # print("%s is %s" % \
-                    #         (vars['leader'], vars['gender']))
-                    observations += 1
-                    removed_leaders.append(vars['leader'])
-        if ((observations/num_items) > best_entropy):
-            best_entropy = observations/num_items
-            best_split = "allies with " + str(attribute)
-            yes = removed_leaders
-
-        no = list(set(init_leaders) - set(yes) - set(eliminated_leaders))
-
-    return([best_split,best_entropy,yes,no])
 
 
 def split():
-
-    attrlit = [fc_test2(),fc_test3(),fc_test4(),fc_test5(),fc_test6()]
-    # print(attrlit)
+    attrlit = [gen_tests.fc_testall(fc_init, engine), gen_tests.fc_testhair(fc_lighthair, engine), gen_tests.fc_testreal(fc_real, engine), gen_tests.fc_testgender(fc_gender, engine), 
+                char_tests.fc_testdisney(fc_disney, engine), char_tests.fc_testprincess(fc_princess, engine), char_tests.fc_testvillain(fc_villain, engine), char_tests.fc_testlightsaber(fc_lightsaber, engine), 
+                char_tests.fc_testcomics(fc_comic, engine), celeb_tests.fc_testskill(fc_skill, engine), celeb_tests.fc_testchildren(fc_children, engine), celeb_tests.fc_testrace(fc_race, engine), 
+                leader_tests.fc_testtitle(fc_title, engine), leader_tests.fc_testdictator(fc_dictator, engine), leader_tests.fc_testnation(fc_rules, engine), leader_tests.fc_testallies(fc_allies, engine)]
 
     curr_best_entropy = 0
     idx = 0
 
     for index, item in enumerate(attrlit):
         entropy = 1 - abs(item[1]-.5)
-        # print("entropy:")
-        # print(entropy)
-        # print(item)
         if entropy > curr_best_entropy:
             curr_best_entropy = entropy
             idx = index
@@ -288,35 +70,28 @@ def split():
                 curr_best_entropy = entropy
                 idx = index
 
-    # print()
-    # print()
-    # print("splitting on:")
-    # print(attrlit[idx])
-    # print("split done")
-
-    user_answer = input("Is the leader " + attrlit[idx][0] + " ? (Yes/No) ")
+    user_answer = input("Is this person" + attrlit[idx][0] + " ? (Yes/No) ")
 
     if user_answer.lower() == "yes":
-        eliminated_leaders.extend(attrlit[idx][3])
-        # print("eliminated:")
-        # print(attrlit[idx][3])
+        print("eliminated_persons")
+        print(attrlit[idx][3])
+        print("leftover")
+        print(attrlit[idx][2])
+        eliminated_persons.extend(attrlit[idx][3])
     else:
-        eliminated_leaders.extend(attrlit[idx][2])
-        # print("eliminated:")
-        # print(attrlit[idx][2])
+        print("eliminated_persons")
+        print(attrlit[idx][2])
+        print("leftover")
+        print(attrlit[idx][3])
+        eliminated_persons.extend(attrlit[idx][2])
 
-    if len(init_leaders) - len(eliminated_leaders) == 1:
-        guessed_leader = list(set(init_leaders) - set(eliminated_leaders))
-        print("The leader you are thinking of is " + str(guessed_leader[0]))
+    if len(init_persons) - len(eliminated_persons) == 1:
+        guessed_person = list(set(init_persons) - set(eliminated_persons))
+        print("The person you are thinking of is " + str(guessed_person[0]))
     else:
         split()
 
     
-
-# MUST CALL !!!!
 kb_init()
 split()
-
-#instructions for new test
-#1) chance fcgoal in both for loops
-#2) change the attribute in the prove() function
+sys.exit()
