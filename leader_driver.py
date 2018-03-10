@@ -62,7 +62,7 @@ def fc_contient(continent = 'Europe'):
 
 fc_contient()
 
-def fc_test2(gender = 'male'):
+def fc_test2():
     '''
     gender
     '''
