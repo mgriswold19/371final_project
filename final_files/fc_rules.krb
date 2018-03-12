@@ -1,0 +1,73 @@
+# son_of
+#    foreach
+#	family.son_of($child, $father, $mother)
+#    assert
+#	family.child_parent($child, $father, father, son)
+#	family.child_parent($child, $mother, mother, son)
+
+gender
+    foreach
+	famous.knownFor($person, $status)
+	notany
+            famous.gender($person, $gender)
+            check $gender == 'female'
+    assert
+        famous.gender($person, 'male')
+
+dictator
+    foreach
+	famous.rules($person, $nation)
+	notany
+            famous.free_elections($nation)
+            check $nation == $nation
+    assert
+        famous.dictator($person)
+
+freely_elected
+    foreach
+	famous.rules($person, $nation)
+	famous.free_elections($nation)
+    assert
+        famous.freely_elected($person)
+
+president
+    foreach
+	famous.rules($person, $nation)
+	notany
+            famous.title($person, $title)
+    assert
+        famous.title($person, 'president')
+
+allies
+    foreach
+	famous.allies($nation1, $nation2)
+	famous.rules($person1, $nation1)
+	famous.rules($person2, $nation2)
+    assert
+        famous.friendly_with($person1, $person2)
+        famous.friendly_with($person2, $person1)
+
+children
+    foreach
+	famous.famousFor($person, $skill)
+	notany
+            famous.children($person, $yesno)
+    assert
+        famous.children($person, 'No')
+
+race
+    foreach
+	famous.famousFor($person, $skill)
+	notany
+            famous.race($person, $race)
+    assert
+        famous.race($person, 'Caucasian')
+
+princess
+    foreach
+	famous.princess($person)
+    assert
+        famous.gender($person, 'female')
+	famous.disney($person)
+
+
